@@ -72,8 +72,8 @@ architecture Behavioral of toplevel is
     
     component top_rxtx is
     generic (
-c_clkfreq		: integer := 50_000_000;
-c_baudrate		: integer := 115_200
+c_clkfreq		;
+c_baudrate		
 );
 port (
 clk				: in std_logic;
@@ -86,8 +86,8 @@ end component;
     
 --component top_transmitter  is
 --generic (
---c_clkfreq		: integer := 50_000_000;
---c_baudrate		: integer := 115_200
+--c_clkfreq		;
+--c_baudrate	
 --);
 --port (
 --clk				: in std_logic;
