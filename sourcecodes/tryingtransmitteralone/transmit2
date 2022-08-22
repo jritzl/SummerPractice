@@ -1,0 +1,116 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+
+entity transmit2 is
+generic (
+c_clkfreq		: integer := 50_000_000;
+c_baudrate		: integer := 115_200
+);
+port (
+clk				: in std_logic;
+reset : in std_logic;
+data_input		: out std_logic_vector (7 downto 0) := ("01010101");
+data_read	     :      in std_logic;
+data_valid	     :      out std_logic := '1'
+
+
+);
+end transmit2;
+architecture Behavioral of transmit2 is
+
+
+constant c_bittimerlimit 	: integer := c_clkfreq/10000;
+type transmitter is (msg1,msg1_w, msg2,msg2_w, msg3,msg3_w,msg4,msg4_w);
+signal center : transmitter := msg1;
+signal bittimer   : integer range 0 to c_bittimerlimit := 0;
+
+
+
+
+begin
+
+
+
+process (clk,reset)
+begin
+
+if reset = '0' then
+center <= msg1;
+data_valid	<= '0';
+data_input		<= (others => '0');
+elsif (rising_edge(clk)) then
+
+	case center is
+	
+		when msg1 =>
+		    bittimer <= 0;
+            data_valid	<= '1';
+            data_input		<= x"41";
+		    if data_read = '1' then
+		      center <= msg1_w;
+              data_valid	<= '0';
+		    end if;
+
+		when msg1_w =>
+    		if (bittimer = c_bittimerlimit-1) then
+		      center <= msg2;
+		      bittimer <= 0;
+			else
+				bittimer		<= bittimer + 1;					
+			end if;			
+			    
+		when msg2 =>
+            data_valid	<= '1';
+            data_input		<= x"42";
+		    if data_read = '1' then
+		      center <= msg2_w;
+              data_valid	<= '0';
+		    end if;
+
+		when msg2_w =>
+    		if (bittimer = c_bittimerlimit-1) then
+		      center <= msg3;
+		      bittimer <= 0;
+			else
+				bittimer		<= bittimer + 1;					
+			end if;		
+		when msg3 =>
+            data_valid	<= '1';
+            data_input		<= x"43";
+		    if data_read = '1' then
+		      center <= msg3_w;
+              data_valid	<= '0';
+		    end if;
+
+		when msg3_w =>
+    		if (bittimer = c_bittimerlimit-1) then
+		      center <= msg4;
+		      bittimer <= 0;
+			else
+				bittimer		<= bittimer + 1;					
+			end if;	
+		when msg4 =>
+            data_valid	<= '1';
+            data_input		<= x"44";
+		    if data_read = '1' then
+		      center <= msg4_w;
+              data_valid	<= '0';
+		    end if;
+
+		when msg4_w =>
+    		if (bittimer = c_bittimerlimit-1) then
+		      center <= msg1;
+			else
+				bittimer		<= bittimer + 1;					
+			end if;		
+			    
+	    
+	end case;
+
+end if;
+end process;
+
+
+
+end Behavioral;
