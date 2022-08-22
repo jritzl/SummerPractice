@@ -1,0 +1,48 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+
+entity transmit_sim is
+end transmit_sim;
+
+architecture Behavioral of transmit_sim is
+
+component top_transmitter is
+generic (
+c_clkfreq		: integer := 50_000_000;
+c_baudrate		: integer := 115_200
+);
+port (
+clk				: in std_logic;
+reset			: in std_logic;
+transmit_out	: out std_logic
+);
+
+end component;
+
+signal clk				: std_logic := '0';
+signal reset		      : std_logic := '1';
+constant c_clkperiod	: time := 10 ns;
+signal transmit_out : std_logic;
+ 
+begin
+
+transmit1 : top_transmitter
+port map(
+clk => clk,
+reset => reset,
+transmit_out	  =>     transmit_out
+);
+
+
+clockx: process begin
+
+clk	<= '0';
+wait for c_clkperiod/2;
+clk	<= '1';
+wait for c_clkperiod/2;
+
+end process clockx;
+
+
+end Behavioral;
