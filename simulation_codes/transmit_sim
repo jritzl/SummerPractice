@@ -9,7 +9,7 @@ architecture Behavioral of transmit_sim is
 
 component top_transmitter is
 generic (
-c_clkfreq		: integer := 50_000_000;
+c_clkfreq		: integer := 100_000_000;
 c_baudrate		: integer := 115_200
 );
 port (
