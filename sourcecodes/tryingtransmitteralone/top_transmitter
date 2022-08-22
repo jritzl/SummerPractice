@@ -1,0 +1,95 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+entity top_transmitter is
+generic (
+c_clkfreq		: integer := 50_000_000;
+c_baudrate		: integer := 115_200
+);
+port (
+clk				: in std_logic;
+reset			: in std_logic;
+transmit_out	: out std_logic
+);
+
+end top_transmitter;
+
+architecture Behavioral of top_transmitter is
+
+component transmitter is
+generic (
+c_clkfreq		: integer := 50_000_000;
+c_baudrate		: integer := 115_200
+);
+port (
+clk				: in std_logic;
+reset			: in std_logic:= '1' ;
+data_input		: in std_logic_vector (7 downto 0);
+data_valid	    : in std_logic;
+transmit_out	: out std_logic;
+data_read	    : out std_logic;
+data_done	    : out std_logic
+
+);
+end component;
+
+component transmit2 is
+generic (
+c_clkfreq		: integer := 50_000_000;
+c_baudrate		: integer := 115_200
+);
+port (
+clk				: in std_logic;
+reset			: in std_logic;
+data_input		: out std_logic_vector (7 downto 0) := (others => '0');
+data_read	    : in std_logic;
+data_valid	     :      out std_logic := '1'
+);
+end component;
+
+signal data_input			: std_logic_vector (7 downto 0) := (others => '0');
+signal data_validlee		: std_logic := '1';
+signal data_reader	: std_logic;
+signal data_done	 :  std_logic;
+constant c_clkperiod	: time := 10 ns;
+
+
+
+
+
+
+begin
+
+transmitter_1 : transmitter
+generic map (
+c_clkfreq		=> c_clkfreq,
+c_baudrate		=> c_baudrate
+)
+port map (
+clk				=> clk,
+reset			=> reset,
+data_input		=> data_input,
+data_valid	    => data_validlee,
+transmit_out	=> transmit_out,
+data_read	    => data_reader,
+data_done	    => data_done
+
+);
+
+
+transmit_2 : transmit2
+generic map(
+c_clkfreq		=> c_clkfreq	  ,
+c_baudrate		=> c_baudrate	  
+)
+port map(
+clk => clk,
+reset			=> reset,
+data_input		=> data_input		,
+data_read		=> data_reader	,
+data_valid		=> data_validlee
+);
+
+end Behavioral;
