@@ -7,7 +7,7 @@ use UNISIM.VComponents.all;
 
 entity top_rxtx is
 generic (
-c_clkfreq		: integer := 50_000_000;
+c_clkfreq		: integer := 100_000_000;
 c_baudrate		: integer := 115_200
 );
 port (
@@ -27,7 +27,7 @@ architecture Behavioral of top_rxtx is
 
 component transmitter is
 generic (
-c_clkfreq		: integer := 50_000_000;
+c_clkfreq		: integer := 100_000_000;
 c_baudrate		: integer := 115_200
 );
 port (
@@ -44,7 +44,7 @@ end component;
        
        component receiver is
 generic (
-c_clkfreq		: integer := 50_000_000;
+c_clkfreq		: integer := 100_000_000;
 c_baudrate		: integer := 115_200
 );
 port (
