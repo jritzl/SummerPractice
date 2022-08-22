@@ -1,0 +1,182 @@
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+library UNISIM;
+use UNISIM.VComponents.all;
+
+entity toplevel is
+generic (
+c_clkfreq		: integer := 50_000_000;
+c_baudrate		: integer := 115_200
+);
+  port (
+    DDR_addr : inout STD_LOGIC_VECTOR ( 14 downto 0 );
+    DDR_ba : inout STD_LOGIC_VECTOR ( 2 downto 0 );
+    DDR_cas_n : inout STD_LOGIC;
+    DDR_ck_n : inout STD_LOGIC;
+    DDR_ck_p : inout STD_LOGIC;
+    DDR_cke : inout STD_LOGIC;
+    DDR_cs_n : inout STD_LOGIC;
+    DDR_dm : inout STD_LOGIC_VECTOR ( 3 downto 0 );
+    DDR_dq : inout STD_LOGIC_VECTOR ( 31 downto 0 );
+    DDR_dqs_n : inout STD_LOGIC_VECTOR ( 3 downto 0 );
+    DDR_dqs_p : inout STD_LOGIC_VECTOR ( 3 downto 0 );
+    DDR_odt : inout STD_LOGIC;
+    DDR_ras_n : inout STD_LOGIC;
+    DDR_reset_n : inout STD_LOGIC;
+    DDR_we_n : inout STD_LOGIC;
+    FIXED_IO_ddr_vrn : inout STD_LOGIC;
+    FIXED_IO_ddr_vrp : inout STD_LOGIC;
+    FIXED_IO_mio : inout STD_LOGIC_VECTOR ( 53 downto 0 );
+    FIXED_IO_ps_clk : inout STD_LOGIC;
+    FIXED_IO_ps_porb : inout STD_LOGIC;
+    FIXED_IO_ps_srstb : inout STD_LOGIC;
+    leds_4bits_tri_o : out std_logic_vector(1 downto 0);
+    rx	    : in std_logic;
+    tx	: out std_logic;
+    sys_clk_p : in std_logic;
+    sys_clk_n : in std_logic
+  );
+end toplevel;
+
+architecture Behavioral of toplevel is
+
+    component zc702demo_wrapper is
+      port (
+        DDR_addr : inout STD_LOGIC_VECTOR ( 14 downto 0 );
+        DDR_ba : inout STD_LOGIC_VECTOR ( 2 downto 0 );
+        DDR_cas_n : inout STD_LOGIC;
+        DDR_ck_n : inout STD_LOGIC;
+        DDR_ck_p : inout STD_LOGIC;
+        DDR_cke : inout STD_LOGIC;
+        DDR_cs_n : inout STD_LOGIC;
+        DDR_dm : inout STD_LOGIC_VECTOR ( 3 downto 0 );
+        DDR_dq : inout STD_LOGIC_VECTOR ( 31 downto 0 );
+        DDR_dqs_n : inout STD_LOGIC_VECTOR ( 3 downto 0 );
+        DDR_dqs_p : inout STD_LOGIC_VECTOR ( 3 downto 0 );
+        DDR_odt : inout STD_LOGIC;
+        DDR_ras_n : inout STD_LOGIC;
+        DDR_reset_n : inout STD_LOGIC;
+        DDR_we_n : inout STD_LOGIC;
+        FIXED_IO_ddr_vrn : inout STD_LOGIC;
+        FIXED_IO_ddr_vrp : inout STD_LOGIC;
+        FIXED_IO_mio : inout STD_LOGIC_VECTOR ( 53 downto 0 );
+        FIXED_IO_ps_clk : inout STD_LOGIC;
+        FIXED_IO_ps_porb : inout STD_LOGIC;
+        FIXED_IO_ps_srstb : inout STD_LOGIC;
+        aclk : out STD_LOGIC;
+        reset_n : out STD_LOGIC_VECTOR ( 0 to 0 )
+      );
+    end component zc702demo_wrapper;
+    
+    component top_rxtx is
+    generic (
+c_clkfreq		: integer := 50_000_000;
+c_baudrate		: integer := 115_200
+);
+port (
+clk				: in std_logic;
+reset_n				: in std_logic;
+rx	    : in std_logic;
+tx	: out std_logic
+
+); 
+end component;
+    
+--component top_transmitter  is
+--generic (
+--c_clkfreq		: integer := 50_000_000;
+--c_baudrate		: integer := 115_200
+--);
+--port (
+--clk				: in std_logic;
+--reset			: in std_logic;
+--transmit_out	: out std_logic
+--);
+--       end component top_transmitter;
+
+
+   
+    attribute keep : string;  
+
+    signal aclk : std_logic;
+    signal reset_n : std_logic := '1';
+    signal sys_clk : std_logic;
+
+    signal leds_4bits_tri : std_logic_vector(3 downto 0);
+signal clk				: std_logic := '0';
+signal data_input			: std_logic_vector (7 downto 0) := (others => '0');
+signal data_valid		: std_logic := '0';
+signal transmit_out				: std_logic;
+signal data_read	: std_logic;
+signal data_done	 :  std_logic;
+signal data_out			:std_logic_vector (7 downto 0);
+signal isRXdone	: std_logic;
+    
+begin
+
+zc702demo_wrapper_i: component zc702demo_wrapper
+     port map (
+      DDR_addr(14 downto 0) => DDR_addr(14 downto 0),
+      DDR_ba(2 downto 0) => DDR_ba(2 downto 0),
+      DDR_cas_n => DDR_cas_n,
+      DDR_ck_n => DDR_ck_n,
+      DDR_ck_p => DDR_ck_p,
+      DDR_cke => DDR_cke,
+      DDR_cs_n => DDR_cs_n,
+      DDR_dm(3 downto 0) => DDR_dm(3 downto 0),
+      DDR_dq(31 downto 0) => DDR_dq(31 downto 0),
+      DDR_dqs_n(3 downto 0) => DDR_dqs_n(3 downto 0),
+      DDR_dqs_p(3 downto 0) => DDR_dqs_p(3 downto 0),
+      DDR_odt => DDR_odt,
+      DDR_ras_n => DDR_ras_n,
+      DDR_reset_n => DDR_reset_n,
+      DDR_we_n => DDR_we_n,
+      FIXED_IO_ddr_vrn => FIXED_IO_ddr_vrn,
+      FIXED_IO_ddr_vrp => FIXED_IO_ddr_vrp,
+      FIXED_IO_mio(53 downto 0) => FIXED_IO_mio(53 downto 0),
+      FIXED_IO_ps_clk => FIXED_IO_ps_clk,
+      FIXED_IO_ps_porb => FIXED_IO_ps_porb,
+      FIXED_IO_ps_srstb => FIXED_IO_ps_srstb,
+      aclk => aclk,
+      reset_n(0) => reset_n
+    );
+    
+    
+--    toptransmit : top_transmitter
+--port map(
+--clk => aclk,
+--reset =>reset_n,
+--transmit_out => transmit_out
+--);
+
+    top_rxtx1: top_rxtx
+    generic map(
+c_clkfreq				=> c_clkfreq				  ,
+c_baudrate			=> c_baudrate)
+port map(
+clk => aclk,
+reset_n =>reset_n,
+rx => rx,
+tx => tx
+);
+
+    IBUFGDS_sysclk : IBUFGDS
+    generic map (
+      DIFF_TERM => TRUE, -- Differential Termination 
+      IBUF_LOW_PWR => FALSE, -- Low power (TRUE) vs. performance (FALSE) setting for referenced I/O standards
+      IOSTANDARD => "LVDS_25")
+    port map (
+      O => sys_clk,    -- Buffer output
+      I => sys_clk_p,  -- Diff_p buffer input (connect directly to top-level port)
+      IB =>sys_clk_n); -- Diff_n buffer input (connect directly to top-level port)
+
+    --
+    
+    -- standard counter
+ 
+
+leds_4bits_tri_o <=  "00";
+
+end Behavioral;
