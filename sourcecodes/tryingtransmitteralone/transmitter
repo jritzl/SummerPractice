@@ -1,0 +1,106 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+entity transmitter is
+generic (
+c_clkfreq		: integer := 50_000_000;
+c_baudrate		: integer := 115_200
+);
+port (
+clk				: in std_logic;
+reset			: in std_logic ;
+data_input		: in std_logic_vector (7 downto 0);
+data_valid	    : in std_logic;
+transmit_out	: out std_logic;
+data_read	    : out std_logic;
+data_done	    : out std_logic
+
+);
+end transmitter;
+
+architecture Behavioral of transmitter is
+
+constant c_bittimerlim 	: integer :=c_clkfreq/c_baudrate;
+
+type transmitter is (IDLE, START, DATA, STOP);
+signal PC : transmitter := IDLE;
+signal bittimer   : integer range 0 to c_bittimerlim := 0;
+signal bitcounter : integer range 0 to 7 := 0;
+signal store	  : std_logic_vector (7 downto 0) := (others => '0');
+
+
+begin
+
+
+P_MAIN : process (clk) begin
+if reset = '0' then
+data_done <= '0';
+PC <= IDLE;
+data_read <= '0';
+transmit_out <= '1';
+elsif (rising_edge(clk)) then
+
+    data_read		<= '0';  
+
+	case PC is
+	
+		when IDLE =>
+		    data_done <= '0';
+			bitcounter	 <= 0;
+			if (data_valid = '1') then
+				PC	<= START;
+				transmit_out	<= '0';
+				store	<= data_input;
+				data_read		<= '1';  
+			end if;
+		
+		when START =>
+			if (bittimer = c_bittimerlim-1) then
+				PC				<= DATA;
+				transmit_out	<= store(0);
+				store		    <= store(0) &  store(7 downto 1);
+				bittimer			<= 0;
+			else
+				bittimer			<= bittimer + 1;
+			end if;
+		
+		when DATA =>
+		
+			if (bitcounter = 7) then
+				if (bittimer = c_bittimerlim-1) then
+					bitcounter		<= 0;
+					PC				<= STOP;
+					transmit_out	<= '1';
+					bittimer		<= 0;
+				else
+					bittimer		<= bittimer + 1;					
+				end if;			
+			else
+				if (bittimer = c_bittimerlim-1) then
+					
+					store		  <= store(0) &  store(7 downto 1);		
+					transmit_out  <= store(0);
+					bitcounter	  <= bitcounter + 1;
+					bittimer	  <= 0;
+				else
+					bittimer	  <= bittimer + 1;					
+				end if;
+			end if;
+		
+		when STOP =>
+		
+			if (bittimer = c_bittimerlim-1) then
+				PC				<= IDLE;
+				data_done <= '1';
+				bittimer		<= 0;
+			else
+				bittimer		<= bittimer + 1;				
+			end if;		
+	
+	end case;
+
+end if;
+end process;
+end Behavioral;
