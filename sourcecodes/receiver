@@ -1,0 +1,90 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+
+entity receiver is
+generic (
+c_clkfreq		: integer := 50_000_000;
+c_baudrate		: integer := 115_200
+);
+port (
+clk				: in std_logic;
+reset			: in std_logic;
+receiver_input	: in std_logic;
+data_out		: out std_logic_vector (7 downto 0);
+isRXdone	    : out std_logic
+);
+end receiver;
+
+architecture Behavioral of receiver is
+
+constant c_bittimerlim 	: integer := c_clkfreq/c_baudrate;
+
+type receiver is (IDLE, START, DATA, STOP);
+signal PC : receiver := IDLE;
+signal bittimer      : integer range 0 to c_bittimerlim := 0;
+signal bitcounter	 : integer range 0 to 7 := 0;
+signal store	     : std_logic_vector (7 downto 0) := (others => '0');
+
+begin
+
+P_MAIN : process (clk) begin
+if reset = '0' then
+isRXdone <= '0';
+PC <= IDLE;
+data_out <= "00000000";
+
+elsif (rising_edge(clk)) then
+
+	case PC is
+	
+		when IDLE =>
+			isRXdone	<= '0';
+			bittimer	<= 0;
+			if (receiver_input = '0') then
+				PC	<= START;
+			end if;
+		
+		when START =>
+		
+			if (bittimer = c_bittimerlim/2-1) then
+				PC		    <= DATA;
+				bittimer	<= 0;
+			else
+				bittimer	<= bittimer + 1;
+			end if;
+		
+		when DATA =>
+		
+			if (bittimer = c_bittimerlim-1) then
+				if (bitcounter = 7) then
+					PC	<= STOP;
+					bitcounter	<= 0;
+				else
+					bitcounter	<= bitcounter + 1;
+				end if;
+				store		<= receiver_input & (store(7 downto 1));
+				bittimer	<= 0;
+			else
+				bittimer	<= bittimer + 1;
+			end if;
+		
+		when STOP =>
+		
+			if (bittimer = c_bittimerlim-1) then
+			    data_out	<= store;
+				PC			<= IDLE;
+				bittimer	<= 0;
+				isRXdone	<= '1';
+			else
+				bittimer	<= bittimer + 1;
+			end if;			
+	
+	end case;
+
+end if;
+end process P_MAIN;
+
+
+
+end Behavioral;
